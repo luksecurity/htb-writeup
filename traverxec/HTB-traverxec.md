@@ -1,9 +1,6 @@
 # Infos
 
-Level : Easy  
-OS : Linux  
-IP : 10.129.24.71  
-Hostname: traverxec
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/htb-card.png)
 
 # Reconnaissance
 
