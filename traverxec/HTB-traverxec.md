@@ -9,8 +9,6 @@ Hostname: traverxec
 
 ## Nmap TCP base
 
-
-
 ```
 nmap -T4 --min-rate 10000 -sV -oN nmap_base 10.129.24.71 -v
 
