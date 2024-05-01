@@ -75,7 +75,7 @@ Dans ce dossier on retrouve également deux fichiers :
 - .htaccess -> ne donne rien
 - backup-ssh-identity-files.tgz -> archive d'un backup SSH -> juicy :p
 
-![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/lat-conf-nostromo.png)
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/lat-david-tgz.png)
 
 On ne peut pas décompresser l'archive sur la target, mais on peut essayer de le transférer sur la machine d'attaque. Ca ne fonctionne pas, on peut tenter de copier le fichier dans /tmp, lui assigner les droits et le décompresser
 
