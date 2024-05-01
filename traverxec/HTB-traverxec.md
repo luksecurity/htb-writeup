@@ -1,6 +1,6 @@
 # Infos
 
-Level : easy  
+Level : Easy  
 OS : Linux  
 IP : 10.129.24.71  
 Hostname: traverxec
@@ -26,12 +26,11 @@ On est sur l'OS Linux, sur le port 80, on retrouve la version de nostromo 1.9.6 
 
 Sur le site, on retrouve une page web statique. Si on se renseigne sur  [nostromo](https://www.gsp.com/cgi-bin/man.cgi?section=8&topic=NHTTPD), on peut voir qu'il s'agit d'un serveur web très minimaliste.
 
-![[../traverxec/img/80-site.png]]
-![]()
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/80-site.png)
 
 En bas de la page, on a un formulaire, mais il ne fonctionne pas
 
-![[80-form-disabled.png]]
+![](https://github.com/0xLuks/htb-writeup/blob/main/traverxec/img/80-form-disabled)
 
 ## Foothold - www-data
 
