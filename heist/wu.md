@@ -4,7 +4,7 @@
 
 ## TL;DR
 
-Regarde le site sous le port 80 et retrouver une formulaire de connexion sur lequel on peut s'authentifié en tant qu'invité, lire les conversations entre l'utilisateur `Hazard` et `Support Admin` et retrouver un fichier `attachment.txt` qui contient la configuration d'un routeur Cisco avec plusieurs hashs. Cracker les hashs et retrouver trois mots de passe, utiliser netexec pour password spraying et retrouver le couple `hazard:stealth1agent`.  
+Regarde le site sous le port 80 et retrouver un formulaire de connexion sur lequel on peut s'authentifié en tant qu'invité, lire les conversations entre l'utilisateur `Hazard` et `Support Admin` et retrouver un fichier `attachment.txt` qui contient la configuration d'un routeur Cisco avec plusieurs hashs. Cracker les hashs et retrouver trois mots de passe, utiliser netexec pour password spraying et retrouver le couple `hazard:stealth1agent`.  
 
 Toujours avec netxec, réaliser un bruteforce RID pour extraire les utilisateurs du domaine et les mettre dans une wordlist pour password spraying à nouveau. Cette fois on retrouve le couple `Chase:Q4)sJu\Y8qz*A3?d`.  
 
