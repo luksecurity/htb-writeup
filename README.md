@@ -1,11 +1,8 @@
 # Writeup Hack The Box
 
 ## Windows
-- Blackfield
-- Heist
-- x
+- [Blackfield](https://github.com/luksecurity/htb-writeup/blob/main/blackfield/HTB-Blackfield.md)
+- [Heist](https://github.com/luksecurity/htb-writeup/blob/main/blackfield/HTB-Heist.md)
 
 ## Unix
-- Traverxec
-- Magic
-- 
+- [Traverxec](https://github.com/luksecurity/htb-writeup/blob/main/blackfield/HTB-Traverxec.md)
