@@ -3,7 +3,7 @@
 ## Windows 📁
 
 ### Easy
-- [Heist](https://github.com/luksecurity/htb-writeup/blob/main/heist/HTB-Heist.md)
+- [Heist](https://github.com/luksecurity/htb-writeup/blob/main/heist/wu.md)
 
 ### Hard
 - [Blackfield](https://github.com/luksecurity/htb-writeup/blob/main/blackfield/HTB-Blackfield.md)
