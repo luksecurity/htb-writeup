@@ -95,11 +95,11 @@ Mais ça ne donne rien :(
 
 Dans le code source, on retrouve un path `/archive` toujours sous beta testing qui pourrait être juicy ! :p
 
-![](img/80-vhost-ssti-sourcecode.png)
+![](img/80-vhost-sourcecode.png)
 
 Si on reach le path, on obtient une page blanche.
 
-![](img/80-vhost-ssti-blank.png)
+![](img/80-vhost-blank.png)
 
 Cependant si on regarde le code source, on peut voir une réponse en XML
 
@@ -141,7 +141,7 @@ Il ne reste plus qu'à modifier la commande id par un reverse shell mkfifo afin 
 
 Une fois qu'on a obtenu un shell, on retrouve rapidement un fichier `site.db` sous `/home/web/blog/flaskblog`.
 
-![](img/lan-userdb.png)
+![](img/lat-userdb.png)
 
 On ne peut pas le transférer via un serveur web python, je vais utiliser une strings en base64 encodé sur la target que je décoderais sur ma machine par la suite. On commence par copier la strings en base64 après avoir exécuter cette commande.
 
