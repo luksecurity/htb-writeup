@@ -11,4 +11,4 @@
 ## Unix 🐧
 
 ### Easy
-- [Traverxec](https://github.com/luksecurity/htb-writeup/blob/main/traverxec/HTB-Traverxec.md)
+- [Traverxec](https://github.com/luksecurity/htb-writeup/blob/main/traverxec/HTB-traverxec.md)
