@@ -4,7 +4,11 @@
 
 ## TL;DR
 
-Regarde le site sous le port 80 et retrouver une formulaire de connexion sur lequel on peut s'authentifié en tant qu'invité, lire les conversations entre l'utilisateur `Hazard` et `Support Admin` et retrouver un fichier `attachment.txt` qui contient la configuration d'un routeur Cisco avec plusieurs hashs. Cracker les hashs et retrouver trois mots de passe, utiliser netexec pour password spraying et retrouver le couple `hazard:stealth1agent`. Toujours avec netxec, réaliser un bruteforce RID pour extraire les utilisateurs du domaine et les mettre dans une wordlist pour password spraying à nouveau. Cette fois on retrouve le couple `Chase:Q4)sJu\Y8qz*A3?d`. Exécuter winPEAS pour voir qu'il y a le logiciel `Firefox` installé sur la machine, faire un audit du code source du formulaire `login.php` et réaliser que les credentials sont codés en dur dans l'application. Regarder les processus en lien avec firefox et utiliser `Procdump` de la suite Sysinternals pour dump la mémoire du processus, transfert du dump sur la machine d'attaque et utiliser `strings` sur `login_password` pour retrouver le mot de passe de l'administrateur. On peut se connecter avec le couple `Administrator:4dD!5}x/re8]FBuZ` via evil-winrm.
+Regarde le site sous le port 80 et retrouver une formulaire de connexion sur lequel on peut s'authentifié en tant qu'invité, lire les conversations entre l'utilisateur `Hazard` et `Support Admin` et retrouver un fichier `attachment.txt` qui contient la configuration d'un routeur Cisco avec plusieurs hashs. Cracker les hashs et retrouver trois mots de passe, utiliser netexec pour password spraying et retrouver le couple `hazard:stealth1agent`.  
+
+Toujours avec netxec, réaliser un bruteforce RID pour extraire les utilisateurs du domaine et les mettre dans une wordlist pour password spraying à nouveau. Cette fois on retrouve le couple `Chase:Q4)sJu\Y8qz*A3?d`.  
+
+Exécuter winPEAS pour voir qu'il y a le logiciel `Firefox` installé sur la machine, faire un audit du code source du formulaire `login.php` et réaliser que les credentials sont codés en dur dans l'application. Regarder les processus en lien avec firefox et utiliser `Procdump` de la suite Sysinternals pour dump la mémoire du processus, transfert du dump sur la machine d'attaque et utiliser `strings` sur `login_password` pour retrouver le mot de passe de l'administrateur. On peut se connecter avec le couple `Administrator:4dD!5}x/re8]FBuZ` via evil-winrm.
 
 ## Reconnaissance
 
