@@ -1,6 +1,6 @@
 # Writeup Hack The Box
 
-## Windows 🖥️
+## Windows 📁
 
 ### Easy
 - [Heist](https://github.com/luksecurity/htb-writeup/blob/main/blackfield/HTB-Heist.md)
