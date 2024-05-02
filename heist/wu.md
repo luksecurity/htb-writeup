@@ -1,6 +1,6 @@
 # HTB - Heist
 
-![[card.png]]
+![](img/card.png)
 
 ## Reconnaissance
 
@@ -46,51 +46,51 @@ Il y a le port WinRM d'ouvert, ce qui peut être intéressant dès que l'on a de
 
 Sur le site, on retrouve un formulaire de connexion avec la possibilité de se connecter en tant que Guest
 
-![[OSCP/OSCP-like/HTB/Windows/22sh list/HTB - Heist/img/80-login.png]]
+![](img/80-login.png)
 
 On arrive sur une page de chat et on retrouve l'utilisateur `Hazard` qui remonte un souci avec un routeur Cisco avec un fichier de configuration en pièce-jointe. A la fin, le même utilisateur demande de créer un compte sur le serveur Windows pour accéder aux fichiers. On peut supposer que ce sera notre foothold.
 
-![[OSCP/OSCP-like/HTB/Windows/22sh list/HTB - Heist/img/80-chat.png]]
+![](img/80-chat.png)
 
 Si on regarde le fichier, il s'agit bien d'un fichier de conf classique Cisco et l'on retrouve un hash md5crypt que l'on peut tenter de crack.
 
-![[80-conf-cisco.png]]
+![](img/80-conf-cisco.png)
 
 `john --format=md5crypt hash.txt --wordlist=../../../intuition/rockyou.txt`
 
-![[crack-md5crypthash.png]]
+![](img/crack-md5crypthash.png)
 
 Ca fonctionne et on retrouve `stealth1agent`. Si on check avec netexec si les creds sont valides, ça passe. On peut voir également que l'on est sur le domaine `SupportDesk`.
 
 `netexec smb 10.129.2.66 -u hazard -p stealth1agent`
 
-![[netexec-valid-account.png]]
+![](img/netexec-valid-account.png)
 
 Tentative de connexion avec evil-winrm, mais ça ne passe pas. On va tenter d'utiliser les creds pour se connecter à partir du formulaire sur le site. Utilisation d'rid-brute pour énumérer les utilisateurs du domaine
 
 `netexec smb 10.129.2.66 -u hazard -p stealth1agent --rid-brute`
 
-![[netexec-rid-brute.png]]
+![](img/netexec-rid-brute.png)
 
 On retrouve cinq utilisateurs
 
-![[netexec-userslist.png]]
+![](img/netexec-userslist.png)
 
 Tentative de password spraying avec la wordlist de users + le mdp cracké, mais ça ne donne rien. Pareil pour `username=mdp`
 
-![[netexec-fail.png]]
+![](img/netexec-fail.png)
 
 ## Première connexion - Chase
 
 Le fuzzing des répertoires ne donne rien de plus. Si on revient sur notre fichier de configuration Cisco, on retrouve d'autres hashs que l'on peut tenter de cracker également avec l'aide de ce [site](https://www.firewall.cx/cisco/cisco-routers/cisco-type7-password-crack.html). Ca fonctionne et on retrouve le mot de passe `Q4)sJu\Y8qz*A3?d`. Ainsi que l'autre `$uperP@ssword`
 
-![[crack-hash7-cisco.png]]
+![](img/crack-hash7-cisco.png)
 
-![[crack-hash7-cisco-other.png]]
+![](img/crack-hash7-cisco-other.png)
 
 Si on password spray avec notre liste d'utilisateur et les deux mots de passe, on retrouve le mot de passe valide `Q4)sJu\Y8qz*A3?d` pour l'utilisateur Chase.
 
-![[netexec-passspray.png]]
+![](img/netexec-passspray.png)
 
 `netexec smb 10.129.2.66 -u users.lst -p 'Q4)sJu\Y8qz*A3?d' --continue-on-success`
 
@@ -100,47 +100,47 @@ Tentative de connexion avec evil-winrm
 
 Ca fonctionne et on peut récupérer le premier flag
 
-![[OSCP/OSCP-like/HTB/Windows/22sh list/HTB - Heist/img/userflag.png]]
+![](img/userflag.png)
 
 ## Elévation de privilèges - Administrator
 
 Lancement de winPEAS, mais ça ne donne rien sauf qu'on peut voir que le logiciel firefox est installé sur la machine et ce n'est pas installé par défaut sous Windows.
 
-![[pe-installedsoft.png]]
+![](img/pe-installedsoft.png)
 
 Dans les utilisateurs, on retrouve `Hazard` qui pourrait être notre pivot.
 
-![[OSCP/OSCP-like/HTB/Windows/22sh list/HTB - Heist/img/lat-users.png]]
+![](img/lat-users.png)
 
 Sous `C:\inetpub\wwwroot\` on peut lire le code source du formulaire de login `login.php` et on voit que les credentials ont été codés en dûr notamment :
 - login_username = `admin@support.htb`
 - login_password = `91c077fb5bcdd1eacf7268c945bc1d1ce2faf9634cba615337adbf0af4db9040` (sha256)
 
-![[pe-loginphp.png]]
+![](img/pe-loginphp.png)
 
 On peut essayer de cracker le hash, mais ça ne donne rien. Dans le répertoire home de `Chase` sous `C:\users\chase\desktop`, on peut voir un fichier `todo.txt` et notamment le point un semble indiquer à l'utilisateur de continuer à check la liste des problèmes.
 
-![[pe-todo.png]]
+![](img/pe-todo.png)
 
 On peut supposer qu'il se connecte régulièrement sur le site, peut-être que l'on peut récupérer le `login_password` directement.
 Analyse des processus sur la machine avec `get-process`
 
-![[pe-process.png]]
+![](img/pe-process.png)
 
 Il y a plusieurs processus firefox en cours. Avec l'aide de cet [article](https://book.hacktricks.xyz/windows-hardening/windows-local-privilege-escalation#memory-password-mining), on peut tenter de créer un dump mémoire du process en utilisant `procdump` de la suite sysinternals pour voir si on peut retrouver les credentials en cleartext.
 
 `.\procdump64.exe -accepteula -ma 5612`
 
-![[pe-procdump-ff.png]]
+![](img/pe-procdump-ff.png)
 
 Transfert du dump sur la machine d'attaque (c'est loooong). Maintenant on peut utiliser le binaire strings pour faire une recherche sur `login_password`
 
 `strings firefox_exe_240502_125440 | grep -i "login_password"`
 
-![[OSCP/OSCP-like/HTB/Windows/22sh list/HTB - Heist/img/pe-strings.png]]
+![](img/pe-strings.png)
 
 Ca fonctionne et on retrouve le mot de passe `4dD!5}x/re8]FBuZ`, tentative de connexion avec evil-winrm et récupération du dernier flag
 
 `evil-winrm -u 'Administrator' -p '4dD!5}x/re8]FBuZ' -i 10.129.2.66`
 
-![[pe-winrm.png]]
+![](img/pe-winrm.png)
