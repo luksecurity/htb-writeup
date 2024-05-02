@@ -165,7 +165,7 @@ Enumération des tables puis de la table `user`
 
 On retrouve l'utilisateur `admin` et son hash associé `$2b$12$Tg2b8u/elwAyfQOvqvxJgOTcsbnkFANIDdv6jVXmxiWsg4IznjI0S`. Selon le site [hashcat](https://hashcat.net/wiki/doku.php?id=example_hashes), il s'agit de bcrypt (mode 30600 pour hashcat).
 
-![](img/hashcat_bcrypt.png)
+![](img/hashcat-bcrypt.png)
 
 Tentative de crack avec JtR, mais ça ne donne rien
 
