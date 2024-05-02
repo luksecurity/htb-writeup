@@ -1,8 +1,14 @@
 # Writeup Hack The Box
 
-## Windows
-- [Blackfield](https://github.com/luksecurity/htb-writeup/blob/main/blackfield/HTB-Blackfield.md)
+## Windows 🖥️
+
+### Easy
 - [Heist](https://github.com/luksecurity/htb-writeup/blob/main/blackfield/HTB-Heist.md)
 
-## Unix
+### Hard
+- [Blackfield](https://github.com/luksecurity/htb-writeup/blob/main/blackfield/HTB-Blackfield.md)
+
+## Unix 🐧
+
+### Easy
 - [Traverxec](https://github.com/luksecurity/htb-writeup/blob/main/blackfield/HTB-Traverxec.md)
