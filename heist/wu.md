@@ -29,6 +29,8 @@ Service Info: OS: Windows; CPE: cpe:/o:microsoft:windows
 ### Nmap TCP full
 
 ```
+sudo nmap -sV -p- -T4 -oN nmap_full --min-rate 10000 10.129.2.66 -v
+
 PORT      STATE SERVICE       VERSION
 80/tcp    open  http          Microsoft IIS httpd 10.0
 135/tcp   open  msrpc         Microsoft Windows RPC
