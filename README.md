@@ -12,3 +12,4 @@
 
 ### Easy
 - [Traverxec](https://github.com/luksecurity/htb-writeup/blob/main/traverxec/HTB-traverxec.md)
+- [Doctor](https://github.com/luksecurity/htb-writeup/blob/main/doctor/wu.md.md)
