@@ -4,6 +4,7 @@
 
 ### Easy
 - [Heist](https://github.com/luksecurity/htb-writeup/blob/main/heist/wu.md)
+- [Nest](https://github.com/luksecurity/htb-writeup/blob/main/doctor/wu.md)
 
 ### Hard
 - [Blackfield](https://github.com/luksecurity/htb-writeup/blob/main/blackfield/HTB-Blackfield.md)
