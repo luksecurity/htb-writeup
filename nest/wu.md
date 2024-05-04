@@ -1,6 +1,6 @@
 # HTB - Nest
 
-![[OSCP/OSCP-like/HTB/Windows/22sh list/nest/img/htb-card.png]]
+![](img/htb-card.png)
 
 ## Reconnaissance
 
@@ -42,39 +42,39 @@ On peut énumérer ce service à l'aide de `telnet`. La commande `help` permet d
 
 `telnet 10.129.200.216 4386`
 
-![[4386-telnet-enum.png]]
+![](img/4386-telnet-enum.png)
 
 Si on utilise la première commande `list`, on retrouve les dossiers du répertoire courant
 
-![[4386-telnet-list.png]]
+![](img/4386-telnet-list.png)
 
 La commande `runquery` nous indique que la configuration de la base de données n'est pas valide.
 
-![[4386-telnet-runq.png]]
+![](img/4386-telnet-runq.png)
 
 Enfin la commande `setdir` est intéressante par elle nous permet  de sélectionner un nouveau répertoire où les requêtes peuvent être exécuter comme on peut le voir avec la commande `help setdir`. On peut essayer de se déplacer sur le répertoire des utilisateurs `C:\Users\`
 
-![[4386-telnet-setd.png]]
+![](img/4386-telnet-setd.png)
 
 Ca fonctionne, mais si j'essaye de me rendre à nouveau dans le répertoire des utilisateurs, j'obtiens un `access denied` où encore que le répertoire n'existe pas.
 
-![[4386-telnet-denied.png]]
+![](img/4386-telnet-denied.png)
 
 Il reste une dernière commande disponible `debug` qui prend en argument un mot de passe. Avec la commande `help debug`, ce mode permet l'utilisation de commandes supplémentaires pour le troubleshooting réseau ou les problème de configuration. Si on tente un mot de passe au hasard, on obtient le message `Invalid password entered`.
 
-![[4386-telnet-debug.png]]
+![](img/4386-telnet-debug.png)
 
 ### Port 445/tcp - SMB
 
 On commence à faire une énumération pour trouver le domaine à l'aide de netexec et on retrouve `HTB-NEST` que l'on ajoute dans /etc/hosts
 
-![[445-dom.png]]
+![](img/445-dom.png)
 
 Si on tente le SMB null session ça ne donne rien, en revanche on peut lister les shares avec le SMB guest logon
 
 `netexec smb 10.129.200.183 -u 'luks' -p '' --shares`
 
-![[445-smb-guest.png]]
+![](img/445-smb-guest.png)
 
 On retrouve deux partages en lecture :
 - Data
@@ -92,13 +92,13 @@ On a accès uniquement au dossier `Shared` et l'on retrouve deux autres dossiers
 
 `smbclient --no-pass //HTB-NEST/Data`
 
-![[445-shared.png]]
+![](img/445-shared.png)
 
 Dans le premier dossier `Maintenance`, on retrouve un fichier `Maintenance Alerts.txt` que l'on récupère
 
 `mget "Maintenance Alerts.txt"`
 
-![[445-shared-alert.png]]
+![](img/445-shared-alert.png)
 
 Dans le second dossier `Templates`, on retrouve deux autres dossiers :
 - HR
@@ -108,39 +108,39 @@ Dans le dossier `HR`, on retrouve un fichier `Welcome Email.txt` que l'on récup
 
 `mget "Welcome Email.txt"`
 
-![[445-shared-welcome.png]]
+![](img/445-shared-welcome.png)
 
 L'autre dossier est vide. le fichier `Maintenance Alerts.txt` n'est pas intéressant, en revanche l'autre nous permet de trouver des creds `TempUser:welcome2019`.
 
-![[welcome-creds.png]]
+![](img/welcome-creds.png)
 
 Avant de poursuivre on va aussi récupérer la liste des utilisateurs en faisant un bruteforce RID
 
 `netexec smb HTB-NEST -u 'luks' -p '' --rid-brute`
 
-![[445-nxc-bruterid.png]]
+![](img/445-nxc-bruterid.png)
 
 Si on utilise ces creds pour lister les shares de l'utilisateur avec netexec, on a maintenant accès au share `Secure$`
 
 `netexec smb 10.129.200.183 -u 'TempUser' -p 'welcome2019' --shares`
 
-![[445-secure$.png]]
+![](img/445-secure$.png)
 
 On continue l'énumération des shares en commençant par `Users`, on a accès uniquement aux répertoires de `TempUser` et l'on retrouve un autre fichier texte `New text Document.txt` que l'on récupère
 
 `smbclient -U 'TempUser%welcome2019' //HTB-NEST/Users`
 
-![[445-home-tempuser.png]]
+![](img/445-home-tempuser.png)
 
 On en profite aussi pour ajouter les autres utilisateurs à notre Wordlist
 
-![[445-share-wordlistadd.png]]
+![](img/445-share-wordlistadd.png)
 
 Le fichier récupéré est vide, on peut à nouveau utiliser le password spraying pour voir s'il y a du password reuse. Et effectivement c'est le cas, le mot de passe `welcome2019` fonctionne aussi pour les utilisateurs `L.Frost` et `R.Thompson` qu'on ajoute dans notre wordlists creds.txt
 
 `netexec smb HTB-NEST -u users.lst -p pass.lst --continue-on-success`
 
-![[445-passreuse.png]]
+![](img/445-passreuse.png)
 
 Avant d'explorer cette piste, on va revenir sur l'utilisateur `TempUser` pour énumérer le share `Secure$`
 
@@ -153,7 +153,7 @@ On retrouve trois shares :
 
 Mais on a accès à aucun des répertoires
 
-![[445-secure$-denied.png]]
+![](img/445-secure$-denied.png)
 
 Et on continue avec l'utilsateur `TempUser` sur le share Data
 
@@ -161,11 +161,11 @@ Et on continue avec l'utilsateur `TempUser` sur le share Data
 
 Cette fois on a accès au répertoire `IT` :)
 
-![[445-share-tempuser-it.png]]
+![](img/445-share-tempuser-it.png)
 
 Seul le dossier `Configs` contient des choses
 
-![[445-data-temp-config.png]]
+![](img/445-data-temp-config.png)
 
 On va tout récupérer d'un coup
 
@@ -175,23 +175,23 @@ prompt off
 mget *
 ```
 
-![[445-grab-recurse.png]]
+![](img/445-grab-recurse.png)
 
 Sous `NotepadPlusPlus`, à la fin du fichier `config.xml`, on retrouve des paths intéressants
 
 ```
-		<File filename="C:\windows\System32\drivers\etc\hosts" />
-        <File filename="\\HTB-NEST\Secure$\IT\Carl\Temp.txt" />
-        <File filename="C:\Users\C.Smith\Desktop\todo.txt" />
+<File filename="C:\windows\System32\drivers\etc\hosts" />
+<File filename="\\HTB-NEST\Secure$\IT\Carl\Temp.txt" />
+<File filename="C:\Users\C.Smith\Desktop\todo.txt" />
 ```
 
-![[audit-np++.png]]
+![](img/audit-np++.png)
 
 Dans le dossier `RU Scanner`, il y a un fichier `RU_config.xml` qui contient les credentials de `C.Smith` en base64 en lien avec le port 389/LDAP
 
 `fTEzAfYDoz1YzkqhQkH6GQFYKp1XY5hm7bjOP86yYxE=`
 
-![[audit-ru_scanner.png]]
+![](img/audit-ru_scanner.png)
 
 Dans le fichier notepad++, on retrouve un path intéressant `\\HTB-NEST\Secure$\IT\Carl\Temp.txt`. On va essayer de se connecter à ce share à nouveau
 
@@ -202,25 +202,25 @@ Ca fonctionne et on obtient un accès à`\\HTB-NEST\Secure$\IT\Carl\` malgré le
 - Reports
 - VB Projects
 
-![[445-carl-secure-access.png]]
+![](img/445-carl-secure-access.png)
 
 On a accès à aucun dossier sauf `VB Projects` et on retrouve deux dossiers :
 - Production
 - WIP
 
-![[445-secure-vbpro.png]]
+![](img/445-secure-vbpro.png)
 
 On a accès qu'au dossier `WIP` et on retrouve un dossier `RU`
 
-![[445-secure-ru.png]]
+![](img/445-secure-ru.png)
 
 Dans ce dossier, on retrouve un fichier `RUScanner.sln` et un dossier du même nom
 
-![[445-secure-ruscanner.png]]
+![](img/445-secure-ruscanner.png)
 
 Dans ce dossier, on retrouve plusieurs fichiers que l'on va récupérer de la même manière que tout à l'heure
 
-![[445-secure-grab.png]]
+![](img/445-secure-grab.png)
 
 Le fichier `Utils.vb` est particulièrement intéressant car il contient une fonction `DecryptString()`. Voici le code complet 
 
@@ -381,37 +381,37 @@ if __name__ == "__main__":
 
 Si on teste notre script, ça fonctionne parfaitement et on récupère le mot de passe `xRxRxPANCAK3SxRxRx`
 
-![[decode_strings.png]]
+![](img/decode_strings.png)
 
 De nouveau avec netexec, on peut énumérer les shares de `C.Smith` et on obtient un accès à son share `Users`. On sait déjà qu'il y a un fichier `todo.txt` puisqu'on l'a vu dans le fichier `config.xml` de NotepadPlusPlus.
 
-![[445-smb-csmith-share.png]]
+![](img/445-smb-csmith-share.png)
 
 On se connecte à son share et on peut récupérer le premier flag
 
-![[445-csmith-userflag.png]]
+![](img/445-csmith-userflag.png)
 
 ## Elévation de privilèges - Administrator
 
 Dans le share de C.Smith, on retrouve un dossier `HQK Reporting`, qui nous fait penser à notre énumérer initiale sous le port `4386`.
 
-![[hqk-csmith-share.png]]
+![](img/hqk-csmith-share.png)
 
 Je commence par récupérer tous les fichiers
 
-![[hqk-csmith-recurse.png]]
+![](img/hqk-csmith-recurse.png)
 
 Dans le fichier `HQK_Config_Backup.xml`, on retrouve un path `C:\Program Files\HQK\ALL QUERIES`.
 
-![[hqk-backup.png]]
+![](img/hqk-backup.png)
 
 Dans le dossier `AD Integration Module`, on récupère un fichier exécutable `HqkLdap.exe`.
 
-![[pe-binary.png]]
+![](img/pe-binary.png)
 
 Enfin le fichier `Debug Mode Password` est vide
 
-![[debug_empty_password.png]]
+![](img/debug_empty_password.png)
 
 Toutefois, on a la possibilité d'afficher les informations détaillées sur les fichiers avec la commande `allinfo` via SMB. On a pas besoin de toutes les données, ce qui va nous intéresser ce sont les flux de données, les streams sont des fonctionnalités du système de fichier NTFS qui permettent de stocker des données supplémentaires dans un fichier par rapport au contenu principal. Ici on a deux :
 - `stream: [::$DATA], 0 bytes` -> représente le flux de données principale avec 0 octet, c'est celui-ci que l'on voit quand on ouvre le fichier normalement.
@@ -423,47 +423,47 @@ Il est possible de récupérer ce mot de passe avec la commande suivante sous la
 
 `get "Debug Mode Password:Password"`
 
-![[debug_stream_grab.png]]
+![](img/debug_stream_grab.png)
 
 Si maintenant on ouvre le fichier, on récupère un mot de passe `WBQ201953D8w`.
 
-![[debug_pass.png]]
+![](img/debug_pass.png)
 
 Maintenant qu'on dispose du mot de passe pour accéder à la fonctionnalité `debug` d'HQK, on peut se reconnecter avec telnet pour voir ce qu'on trouve. Ca fonctionne et on obtient `Debug mode enabled`. Et si on tape `help`, on obtient plus de commandes disponibles que lors de l'énumération initiale, notamment `service`, `session`, `showquery`.
 
-![[4386-debug-enabled.png]]
+![](img/4386-debug-enabled.png)
 
 La commande `service` nous permet d'obtenir des informations sur le serveur HQK comme la version, l'utilisateur sous lequel le programme est exécuté, le répertoire de requête initiale `C:\Program Files\HQK\ALL QUERIES` etc.
 
-![[4386-debug-service.png]]
+![](img/4386-debug-service.png)
 
 La commande `session` nous permet de récupérer d'autres informations comme l'ID de la session, le timestamp de démarrage etc.
 
-![[4386-debug-session.png]]
+![](img/4386-debug-session.png)
 
 Si maintenant on utilise `setdir` pour se rendre sous `C:\Program Files\HQK\`, on accède à d'autres répertoires notamment `LDAP` qui semble juicy
 
-![[4386-debug-setd.png]]
+![](img/4386-debug-setd.png)
 
 Si on se rend à l'intérieur, on retrouve un fichier `Ldap.conf` et si on l'énumère avec `showquery 2`, on retrouve des informations sur l'utilisateur `Administator` et notamment un mot de passe `yyEq0Uvvhq2uQOcWG8peLoeRQehqip/fKdeG/kjEVb4=`.
 
-![[4386-debug-ldap.png]]
+![](img/4386-debug-ldap.png)
 
 Il ressemble beaucoup à celui qu'on a retrouvé dans le fichier de configuration d'RU Scanner.
 
-![[ldap_pass_b64.png]]
+![](img/ldap_pass_b64.png)
 
 Si je tente de déchiffrer le mot de passe avec notre script python, on obtient une erreur, un problème de padding.
 
-![[ldap_pass_pad.png]]
+![](img/ldap_pass_pad.png)
 
 Il nous reste notre binaire `HqkLdap.exe` que l'on va transférer sur notre VM Windows pour le décompiler avec `DNSpy` pour un peu ce qu'il y a sous le capot. On commence par regarde la fonction `main()`
 
-![[dnspy-main.png]]
+![](img/dnspy-main.png)
 
 A partir de la ligne 24, on peut voir une lecture des paramètres LDAP à partir d'un fichier de configuration, probablement `Ldap.conf` que l'on a pu énumérer via HQK, car on retrouve des syntaxes similaires `Domain=`, `User=`, `Password=`. Ces paramètres sont stockés ensuite dans une instance de `LdapSearchSettings`, pour le paramètre `Password=`, on voit que ça fait appel à la méthode `CR.DS()` à la ligne 38 qui utilisée pour déchiffrer le mot de passe. On va donc switcher vers cette méthode
 
-![[dnspy-ds.png]]
+![](img/dnspy-ds.png)
 
 La méthode `DS()` de la classe `CR` est une fonction de déchiffrement de strings, `EncryptedString` est la strings chiffrée initiale, la fonction `CR.DS()` est appelé avec plusieurs paramètres :
 - `Input` -> la strings chiffrée à déchiffrer
@@ -471,7 +471,7 @@ La méthode `DS()` de la classe `CR` est une fonction de déchiffrement de strin
 
 Après avoir récupérer les paramètres, on passe à la méthode `RD()`.
 
-![[dns-rd.png]]
+![](img/dns-rd.png)
 
 Cette méthode `RD()` est la fonction de déchiffrement utilisant l'algorithme AES en mode CBC. Elle comprend plusieurs valeurs :
 - `cipherText` -> la strings chiffrée à déchiffrer
@@ -485,23 +485,23 @@ Cette méthode convertit ensuite l'IV et la valeur du salt en tableaux d'octets 
 
 Il est donc clair que l'on est en présence la même méthode de chiffrement pour le mot de passe LDAP d'Administrator que celui que l'on a retrouver dans RU Scanner. Si maintenant on reprend notre script python en modifiant les différentes clés.
 
-![[decodeadm_strings.png]]
+![](img/decodeadm_strings.png)
 
 On lance le script avec le mot passe `yyEq0Uvvhq2uQOcWG8peLoeRQehqip/fKdeG/kjEVb4=`.
 
-![[decodeadm_pass.png]]
+![](img/decodeadm_pass.png)
 
 Ca fonctionne et on récupère le mot de passe `XtH4nkS4Pl4y1nGX`. On sait qu'il s'agit du mot de passe de l'Administrator, utilisation de NetExec pour confirmer
 
-![[adm_nxc.png]]
+![](img/adm_nxc.png)
 
 Tout est fonctionnel et on peut voir que l'on a accès au share `ADMIN$`, on peut donc utiliser psexec de la suite impacket pour obtenir un shell.
 
-![[psexec_adm.png]]
+![](img/psexec_adm.png)
 
 Récupération du dernier flag
 
-![[OSCP/OSCP-like/HTB/Windows/22sh list/nest/img/rootflag.png]]
+![](img/rootflag.png)
 
 
 
